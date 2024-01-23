@@ -1,13 +1,13 @@
 const express = require('express');
-const elasticsearch = require('elasticsearch');
+const { Client } = require('@elastic/elasticsearch')
 const ejs = require('ejs');
 const compromise = require('compromise');
 
 const app = express();
 
 
-const client = new elasticsearch.Client({
-  
+const client = new Client({
+  node: "http://192.168.1.72:9200",
   log: 'info',
 });
 
@@ -183,6 +183,8 @@ app.get('/search', async (req, res) => {
 
 // Start the server
 const port = 3000;
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+const host = "0.0.0.0"
+app.listen(port, host,() => {
+
+  console.log(`Server is running on http://${host}:${port}`);
 });
