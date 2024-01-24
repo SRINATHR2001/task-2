@@ -117,10 +117,23 @@ app.get('/search', async (req, res) => {
   try {
     let searchTerm = req.query.q || '';
 
-    // Exclude 'under' only when it comes before the price
-    const regex = /\bunder\b\s*(\d+(\.\d+)?)?/i;
-    searchTerm = searchTerm.replace(regex, '');
-    var value=parseFloat(searchTerm);
+    const words = searchTerm.split(' ');    
+    const filteredWords = words.filter((word, index, array) => {
+      if (word.toLowerCase() === 'under' && index < array.length - 1 && !isNaN(array[index + 1])) {
+        return false;
+      }
+      return true;
+    });
+    console.log(filteredWords);
+    const lastElement = filteredWords[filteredWords.length - 1];
+
+    const value = parseInt(lastElement, 10);
+    
+    const modifiedSearchTerm = filteredWords.join(' ');
+    
+    console.log(modifiedSearchTerm);
+    
+    console.log(value);
 
     const body = await client.search({
       index:"product_index",
@@ -145,7 +158,7 @@ app.get('/search', async (req, res) => {
                   should:[
                     {
                       multi_match:{
-                        query:searchTerm,
+                        query:modifiedSearchTerm,
                         fields:['PD_NAME','BRAND','CD'],
                       }
                     }
