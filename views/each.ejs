@@ -118,6 +118,8 @@
     <div class="container">
         <h1 id="heading">Product Data Table</h1>
         <button class="btn btn-primary"><a href='/' style="text-decoration: none; color: #ffffff;">HOME</a></button>
+    </div>
+    <div class="container">
         <table class="table table-striped">
             <thead class="table-dark">
                 <tr>
@@ -141,6 +143,10 @@
                         <td><%= item._source.DISCOUNT_AMOUNT %></td>
                         <td><%= item._source.STOCK %></td>
                     </tr>
+                    <script>
+                        document.getElementById("heading").innerText = `<%= item._source.CD %>-table`;
+
+                    </script>
                 <% }); %>
             </tbody>
         </table>
