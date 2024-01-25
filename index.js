@@ -115,76 +115,93 @@ app.get('/categories/type', async (req, res) => {
 
 app.get('/search', async (req, res) => {
   try {
-    let searchTerm = req.query.q || '';
+      let searchTerm = req.query.q || '';
 
-    const words = searchTerm.split(' ');    
-    const filteredWords = words.filter((word, index, array) => {
-      if (word.toLowerCase() === 'under' && index < array.length - 1 && !isNaN(array[index + 1])) {
-        return false;
-      }
-      return true;
-    });
-    console.log(filteredWords);
-    const lastElement = filteredWords[filteredWords.length - 1];
-
-    const value = parseInt(lastElement, 10);
-    
-    const modifiedSearchTerm = filteredWords.join(' ');
-    
-    console.log(modifiedSearchTerm);
-    
-    console.log(value);
-
-    const body = await client.search({
-      index:"product_index",
-      body:{
-        query:{
-          bool:{
-            must:[
-              {
-                exists:{
-                  field:"MRP",
-                }
-              },
-              {
-                range:{
-                  MRP:{
-                    lte:value,
-                  }
-                }
-              },
-              {
-                bool:{
-                  should:[
-                    {
-                      multi_match:{
-                        query:modifiedSearchTerm,
-                        fields:['PD_NAME','BRAND','CD'],
-                      }
-                    }
-                  ]
-                }
-              }
-            ]
+      const words = searchTerm.split(' ');    
+      const filteredWords = words.filter((word, index, array) => {
+          if (word.toLowerCase() === 'under' && index < array.length - 1 && !isNaN(array[index + 1])) {
+              return false;
           }
-        },
-        _source: ['PD_NAME', 'BRAND', 'MRP', 'STOCK', 'PD_ID', 'DISCOUNT_AMOUNT', 'CD', 'category_id'],
-      }
-    });
-    console.log('Elasticsearch Response:', JSON.stringify(body, null, 2));
+          return true;
+      });
 
-    if (body.hits && body.hits.hits) {
-      const hits = body.hits.hits;
-      res.render('search', { data: hits });
-    } else {
-      console.error('No hits found in Elasticsearch response:', body);
-      res.status(404).send('No data found');
-    }
+      const lastElement = filteredWords[filteredWords.length - 1];
+      const value = parseInt(lastElement, 10);
+      const modifiedSearchTerm = filteredWords.join(' ');
+
+      const body = await client.search({
+          index: "product_index",
+          body: {
+              query: {
+                  bool: {
+                      must: [
+                          {
+                              exists: {
+                                  field: "MRP",
+                              }
+                          },
+                          {
+                              range: {
+                                  MRP: {
+                                      lte: value,
+                                  }
+                              }
+                          },
+                          {
+                              bool: {
+                                  should: [
+                                      {
+                                          multi_match: {
+                                              query: modifiedSearchTerm,
+                                              fields: ['PD_NAME', 'BRAND', 'CD'],
+                                          }
+                                      }
+                                  ]
+                              }
+                          }
+                      ]
+                  }
+              },
+              _source: ['PD_NAME', 'BRAND', 'MRP', 'STOCK', 'PD_ID', 'DISCOUNT_AMOUNT', 'CD', 'category_id'],
+              size:20
+          }
+      });
+
+      console.log('Elasticsearch Response:', JSON.stringify(body, null, 2));
+
+      if (body.hits && body.hits.hits) {
+          const hits = body.hits.hits;
+
+          // Pagination
+          const page = parseInt(req.query.page) || 1; // Current page, default is 1
+          const pageSize = 10; // Number of items per page
+
+          const totalItems = body.hits.total.value; // Total items matching the query
+          const totalPages = Math.ceil(totalItems / pageSize);
+
+          const from = (page - 1) * pageSize;
+          const to = Math.min(page * pageSize, totalItems);
+
+          const paginatedHits = hits.slice(from, to);
+
+          // Render the search.ejs with pagination information
+          res.render('search', {
+              data: paginatedHits,
+              currentPage: page,
+              totalPages: totalPages,
+              searchTerm: searchTerm
+          });
+      } else {
+          console.error('No hits found in Elasticsearch response:', body);
+          res.status(404).send('No data found');
+      }
   } catch (error) {
-    console.error('Error in Elasticsearch query:', error.message);
-    res.status(500).send('Internal Server Error');
+      console.error('Error in Elasticsearch query:', error.message);
+      res.status(500).send('Internal Server Error');
   }
 });
+
+
 
 
 
