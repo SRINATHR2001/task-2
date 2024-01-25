@@ -81,13 +81,19 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Category Data Table</h1>
-        </header>
-        <div class="all-products-btn">
+    <div class="container" style="text-align: left;">
+        
+        <div class="all-products-btn" style="text-align: left;">
             <button class="btn btn-success"><a href='/all-products' style="text-decoration: none; color: #ffffff;">View All Products</a></button>
         </div>
+        <form action="/search" method="GET" class="mb-3">
+            <div class="input-group">
+                <input type="text" class="form-control mr-10" placeholder="Search products..." name="q">
+                <button class="btn btn-primary" type="submit">Search</button>
+            </div>
+        </form>
+    </div>
+    <div class="container">
         <h2>Category List</h2>
         <table class="table table-striped">
             <thead class="table-dark">
